@@ -97,10 +97,8 @@ def index():
                                         'id': entry['id'],
                                         'title': entry['title'],
                                         'thumbnail': thumbnail_url,
-                                        # ✨ CORRECCIÓN CLAVE: Almacenar la URL canónica de YouTube ✨
                                         'url': f"https://www.youtube.com/watch?v={entry['id']}" 
                                     })
-                                    # ✨ CORRECCIÓN CLAVE: Almacenar la URL canónica en el caché también ✨
                                     search_results_cache[entry['id']] = f"https://www.youtube.com/watch?v={entry['id']}"
                             
                             if not videos:
@@ -153,33 +151,31 @@ def index():
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }],
-                    # Usar el ID del video para el nombre del archivo en el servidor.
-                    # Esto asegura un nombre único y evita problemas si el título es genérico o tiene caracteres especiales.
                     'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(id)s.%(ext)s'), 
                     'noplaylist': True,
                     'quiet': True,
                     'no_warnings': True,
+                    # ✨ SOLUCIÓN: Añadir un User-Agent para simular un navegador real ✨
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
                 }
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url_to_download, download=True)
                     
-                    # El nombre del archivo en el servidor ahora se basa en el ID del video.
                     server_file_name = f"{info['id']}.mp3"
                     mp3_path_expected = os.path.join(DOWNLOAD_FOLDER, server_file_name)
                     
                     if os.path.exists(mp3_path_expected):
                         song_title = info.get('title', 'Unknown Song')
                         
-                        # Construir el nombre del archivo para la descarga en el navegador.
                         final_file_name_for_browser = f"{song_title} From Niko's MP3.mp3"
                         
                         response = send_from_directory(
                             DOWNLOAD_FOLDER,
-                            server_file_name, # Enviamos el archivo con su nombre real en el servidor (ID.mp3)
+                            server_file_name,
                             as_attachment=True,
                             mimetype='audio/mpeg',
-                            download_name=final_file_name_for_browser # El nombre que el navegador usará para guardar
+                            download_name=final_file_name_for_browser
                         )
                         
                         @response.call_on_close
