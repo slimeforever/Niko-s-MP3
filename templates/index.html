@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niko's MP3</title>
+    <link rel="icon" href="https://cdn2.steamgriddb.com/icon/79e410fb9488b208773459fa9249205f.ico" type="image/x-icon">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos base (Temática Oneshot Oscura) */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a0a2a; /* Morado muy oscuro, casi negro */
+            color: #d4af37; /* Dorado/ámbar para el texto principal (color de la bombilla) */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container {
+            background-color: #2b1a3d; /* Un morado oscuro un poco más claro para el contenedor */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra más pronunciada para el estilo oscuro */
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* Añadido para posicionar el spinner */
+        }
+        h1 {
+            color: #f7e08e; /* Amarillo claro/crema para el título (como luz) */
+            margin-bottom: 25px;
+            font-family: 'Comfortaa', cursive;
+            text-shadow: 0 0 8px rgba(255, 223, 0, 0.8),
+                         0 0 15px rgba(255, 223, 0, 0.5);
+        }
+        .search-form {
+            display: flex;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .search-form input[type="text"] {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #4a2d5e; /* Borde morado más claro para el input */
+            border-right: none;
+            border-radius: 5px 0 0 5px;
+            font-size: 16px;
+            background-color: #3b284d; /* Fondo de input morado oscuro */
+            color: #f7e08e; /* Texto de input amarillo claro */
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .search-form button {
+            padding: 12px 20px;
+            background-color: #6a008c; /* Morado vibrante para el botón de búsqueda */
+            color: #ffe0b2; /* Amarillo suave para el texto del botón */
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
+        .search-form button:hover {
+            background-color: #8c00b3; /* Morado más claro al pasar el ratón */
+        }
+        
+        /* Estilos para el mensaje de notificación */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-weight: bold;
+            display: flex; /* Para alinear el icono de Niko */
+            align-items: center; /* Para centrar verticalmente el icono */
+            gap: 10px; /* Espacio entre el icono y el texto */
+            opacity: 1; /* Por defecto visible */
+            transition: opacity 0.5s ease-out, height 0.5s ease-out, padding 0.5s ease-out, margin 0.5s ease-out, border 0.5s ease-out; /* Transición para el desvanecimiento y ocultamiento */
+        }
+
+        .message.hidden {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            overflow: hidden; /* Ocultar el contenido cuando está oculto */
+            border: none; /* Eliminar borde para que desaparezca bien */
+        }
+
+        .message.success {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+        }
+
+        .message.error {
+            background-color: #F44336; /* Rojo */
+            color: white;
+        }
+
+        .message.warning {
+            background-color: #FFC107; /* Amarillo/Naranja */
+            color: #333; /* Texto oscuro para contraste */
+        }
+
+        .message.error-niko {
+            background-color: #6a008c; /* Morado Oneshot, similar a tu botón */
+            color: #f7e08e; /* Dorado/Amarillo de la bombilla */
+            border: 2px solid #d4af37; /* Borde dorado */
+        }
+
+        .message-icon {
+            width: 32px; /* Tamaño del sprite de Niko */
+            height: 32px;
+            flex-shrink: 0; /* Evita que el icono se encoja */
+            image-rendering: pixelated; /* Para que el pixel art no se vea borroso */
+        }
+
+        .video-results {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+        .video-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #4a2d5e;
+            transition: border-bottom 0.3s ease;
+        }
+        .video-item:last-child {
+            border-bottom: none;
+        }
+        .video-thumbnail {
+            width: 70px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .video-content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+        .video-title {
+            font-size: 16px;
+            color: #d4af37;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .video-number {
+            font-size: 0.9em;
+            color: #8a6c9d;
+            margin-bottom: 4px;
+        }
+        .download-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .download-button svg {
+            width: 28px;
+            height: 28px;
+            fill: #ffd700;
+            transition: fill 0.2s ease, transform 0.2s ease;
+        }
+        .download-button:hover svg {
+            fill: #ffed4a;
+            transform: translateY(1px);
+        }
+        .download-button:active svg {
+            transform: translateY(2px);
+        }
+
+        /* Estilo para el icono de la bombilla principal */
+        .bulb-icon {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 90px;
+            height: auto;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .bulb-icon:hover {
+            transform: scale(1.05);
+        }
+
+        /* Estilos para el spinner de carga */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(43, 26, 61, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            border-radius: 8px;
+            flex-direction: column;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #4a2d5e;
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        .loading-text {
+            color: #f7e08e;
+            font-size: 1.1em;
+            font-family: 'Comfortaa', cursive;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Deshabilitar elementos mientras carga */
+        .loading-active .search-form input,
+        .loading-active .search-form button,
+        .loading-active .download-button {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Estilos para la marca de agua */
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(212, 175, 55, 0.3);
+            font-size: 0.8em;
+            font-family: 'Comfortaa', cursive;
+            z-index: 9999;
+            pointer-events: none;
+            text-align: right;
+            
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Estilos para el icono de Niko en la marca de agua */
+        .watermark-icon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.4;
+            filter: drop-shadow(0 0 2px rgba(255, 223, 0, 0.5));
+            image-rendering: pixelated;
+        }
+
+        /* Estilos para el botón de depuración y el panel */
+        .debug-button {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 60px; /* Tamaño de la bombilla de depuración */
+            height: auto;
+            cursor: pointer;
+            z-index: 9998; /* Un poco menos que la marca de agua para que no la tape */
+            opacity: 0.7;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .debug-button:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 80px; /* Posicionado a la derecha del botón de depuración */
+            background-color: #3b284d; /* Fondo morado oscuro */
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 9997;
+            display: none; /* Oculto por defecto */
+            flex-direction: column;
+            gap: 10px;
+            width: 200px; /* Ancho del panel */
+        }
+
+        .debug-panel-button {
+            background-color: #8c00b3; /* Morado más claro */
+            color: #ffe0b2;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-family: 'Comfortaa', cursive;
+            transition: background-color 0.2s ease;
+        }
+        .debug-panel-button:hover {
+            background-color: #a300d8; /* Morado aún más claro al pasar el ratón */
+        }
+    </style>
+</head>
+<body>
+    <img src="https://cdn2.steamgriddb.com/icon/79e410fb9488b208773459fa9249205f.ico" alt="Oneshot Lightbulb Icon" class="bulb-icon">
+
+    <div class="container" id="main-container">
+        <h1>Niko's MP3</h1>
+
+        {% if message %}
+        <div id="statusMessage" class="message {{ message_type }}">
+            {% if message_icon %} {# Mostrar icono si se ha proporcionado uno #}
+            <img src="{{ url_for('static', filename='images/' + message_icon) }}" alt="Icono de mensaje" class="message-icon">
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+        {% endif %}
+
+        <form class="search-form" method="POST" action="/">
+            <input type="text" name="search_query" placeholder="Buscar video de YouTube..." value="{{ last_query if last_query else '' }}" required>
+            <button type="submit">Buscar</button>
+        </form>
+
+        <ul class="video-results">
+            {% if videos %}
+                {% for video in videos %}
+                <li class="video-item">
+                    {% if video.thumbnail %}
+                        <img src="{{ video.thumbnail }}" alt="Miniatura de video" class="video-thumbnail">
+                    {% endif %}
+                    
+                    <div class="video-content">
+                        <span class="video-number">{{ loop.index }}.</span>
+                        <span class="video-title">{{ video.title }}</span>
+                    </div>
+
+                    <form method="POST" action="/" style="margin: 0;">
+                        <input type="hidden" name="download_id" value="{{ video.id }}"> 
+                        <button type="submit" class="download-button" title="Descargar MP3">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 17.293l-4.146-4.147a.999.999 0 10-1.414 1.414l5.146 5.147a.999.999 0 001.414 0l5.146-5.147a.999.999 0 10-1.414-1.414L12 17.293zM12 2a.999.999 0 00-.999.999v13a.999.999 0 101.998 0V2.999A.999.999 0 0012 2z"/>
+                            </svg>
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <div class="loading-text">Cargando...</div>
+        </div>
+    </div>
+
+    <div class="watermark">
+        <img src="{{ url_for('static', filename='images/niko.png') }}" alt="Icono de Niko" class="watermark-icon">
+        <span>Creado por Gemini IA<br>y Slime Izanami</span>
+    </div>
+
+    <img src="{{ url_for('static', filename='images/bombilla dev.png') }}" alt="Botón de Depuración" class="debug-button" id="debugButton">
+
+    <div class="debug-panel" id="debugPanel">
+        <span style="color: #f7e08e; font-family: 'Comfortaa', cursive; margin-bottom: 5px;">Panel de Depuración</span>
+        <button class="debug-panel-button" id="simulateSearchFailure">Simular: Caída de Búsqueda</button>
+        <button class="debug-panel-button" id="simulateSuccessMessage">Simular: Mensaje de Éxito</button>
+        <button class="debug-panel-button" id="simulateErrorMessage">Simular: Mensaje de Error</button>
+        <button class="debug-panel-button" id="simulateWarningMessage">Simular: Mensaje de Advertencia</button>
+        <button class="debug-panel-button" id="resetDefaultButton">Resetear a Default</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const mainContainer = document.getElementById('main-container');
+            const searchForm = document.querySelector('.search-form');
+            const downloadForms = document.querySelectorAll('.video-item form');
+            const debugButton = document.getElementById('debugButton');
+            const debugPanel = document.getElementById('debugPanel');
+            const simulateSearchFailureButton = document.getElementById('simulateSearchFailure');
+            const simulateSuccessMessageButton = document.getElementById('simulateSuccessMessage');
+            const simulateErrorMessageButton = document.getElementById('simulateErrorMessage');
+            const simulateWarningMessageButton = document.getElementById('simulateWarningMessage');
+            const resetDefaultButton = document.getElementById('resetDefaultButton');
+
+            // Variable para rastrear si el spinner fue activado por una acción del usuario
+            let spinnerActivatedByAction = sessionStorage.getItem('spinnerActive') === 'true';
+
+            function showLoading() {
+                loadingOverlay.style.display = 'flex';
+                mainContainer.classList.add('loading-active');
+                sessionStorage.setItem('spinnerActive', 'true'); // Marcar que el spinner está activo por una acción
+            }
+
+            function hideLoading() {
+                loadingOverlay.style.display = 'none';
+                mainContainer.classList.remove('loading-active');
+                sessionStorage.removeItem('spinnerActive'); // Limpiar la marca
+            }
+
+            searchForm.addEventListener('submit', function() {
+                showLoading();
+            });
+
+            // Es importante re-seleccionar los formularios de descarga si la lista de videos cambia dinámicamente
+            // Por ahora, con la recarga de página, esto es suficiente.
+            downloadForms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    showLoading();
+                });
+            });
+
+            // Lógica para que el spinner se oculte con un retraso mínimo si fue activado por una acción
+            if (spinnerActivatedByAction) {
+                // Asegurarse de que el spinner se muestre inmediatamente al cargar la página si estaba activo
+                loadingOverlay.style.display = 'flex';
+                mainContainer.classList.add('loading-active');
+
+                // Ocultar el spinner después de un tiempo mínimo (ej. 1 segundo)
+                setTimeout(() => {
+                    hideLoading();
+                }, 1000); // El spinner se mostrará por al menos 1 segundo
+            } else {
+                // Si la página se carga por primera vez o no fue por una acción, ocultar el spinner inmediatamente
+                hideLoading();
+            }
+
+            // Lógica para que los mensajes de estado desaparezcan
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (statusMessage) {
+                setTimeout(() => {
+                    statusMessage.style.opacity = '0'; 
+                    statusMessage.addEventListener('transitionend', () => {
+                        statusMessage.classList.add('hidden'); 
+                    }, { once: true });
+                }, 5000); // 5 segundos
+            }
+
+            // Lógica del botón de depuración
+            debugButton.addEventListener('click', function() {
+                if (debugPanel.style.display === 'flex') {
+                    debugPanel.style.display = 'none';
+                } else {
+                    debugPanel.style.display = 'flex';
+                }
+            });
+
+            // Función genérica para simular acciones de depuración
+            function simulateDebugAction(actionType) {
+                showLoading();
+                const debugForm = document.createElement('form');
+                debugForm.method = 'POST';
+                debugForm.action = '/';
+
+                const debugActionInput = document.createElement('input');
+                debugActionInput.type = 'hidden';
+                debugActionInput.name = 'debug_action';
+                debugActionInput.value = actionType;
+
+                debugForm.appendChild(debugActionInput);
+                document.body.appendChild(debugForm);
+                debugForm.submit();
+            }
+
+            simulateSearchFailureButton.addEventListener('click', function() {
+                simulateDebugAction('simulate_search_failure');
+            });
+
+            simulateSuccessMessageButton.addEventListener('click', function() {
+                simulateDebugAction('simulate_success_message');
+            });
+
+            simulateErrorMessageButton.addEventListener('click', function() {
+                simulateDebugAction('simulate_error_message');
+            });
+
+            simulateWarningMessageButton.addEventListener('click', function() {
+                simulateDebugAction('simulate_warning_message');
+            });
+
+            resetDefaultButton.addEventListener('click', function() {
+                simulateDebugAction('reset_default');
+            });
+        });
+
+        window.addEventListener('beforeunload', function() {
+            // Asegurarse de que el spinner se oculte si el usuario navega fuera de la página
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+            // Limpiar el estado del spinner en sessionStorage al salir de la página
+            sessionStorage.removeItem('spinnerActive');
+        });
+    </script>
+</body>
+</html>
